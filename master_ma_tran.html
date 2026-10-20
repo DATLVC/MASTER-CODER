@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Máy Tính Đại Số Tuyến Tính</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      background-color: #1e293b;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      max-width: 800px;
+      width: 100%;
+    }
+    h2 {
+      margin: 0 0 6px 0;
+      color: #38bdf8;
+      text-align: center;
+    }
+    .subtitle {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .control-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f172a;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .input-group label {
+      font-size: 12px;
+      color: #cbd5e1;
+      font-weight: bold;
+    }
+    select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: #334155;
+      color: #fff;
+      border: 1px solid #475569;
+      font-size: 14px;
+    }
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+    .matrices-wrapper {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    .matrix-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .matrix-title {
+      font-weight: bold;
+      color: #38bdf8;
+      margin-bottom: 8px;
+    }
+    .grid-matrix {
+      display: grid;
+      gap: 6px;
+      background: #0f172a;
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 3px solid #38bdf8;
+      border-right: 3px solid #38bdf8;
+    }
+    .grid-matrix input {
+      width: 50px;
+      height: 38px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: bold;
+      background: #1e293b;
+      color: #fff;
+      border: 1px solid #475569;
+      border-radius: 4px;
+    }
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-primary {
+      background-color: #0284c7;
+      color: white;
+      width: 100%;
+      font-size: 16px;
+    }
+    .btn-primary:hover {
+      background-color: #0369a1;
+    }
+    .btn-secondary {
+      background-color: #334155;
+      color: #e2e8f0;
+    }
+    .result-box {
+      margin-top: 20px;
+      background: #0b1120;
+      padding: 18px;
+      border-radius: 8px;
+      border-left: 4px solid #10b981;
+      font-family: monospace;
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🧮 Hệ Thống Đại Số Tuyến Tính Toàn Diện</h2>
+    <p class="subtitle">Tính toán số nguyên và phân tích từng bước</p>
+
+    <div class="control-panel">
+      <div class="input-group">
+        <label>Phép toán:</label>
+        <select id="operation-type" onchange="doiPhepToan()">
+          <option value="inv">Ma trận nghịch đảo (A⁻¹)</option>
+          <option value="det">Định thức & kiểm tra ma trận vuông</option>
+          <option value="rank">Hạng của ma trận (rank A)</option>
+          <option value="add">Cộng hai ma trận (A + B)</option>
+          <option value="mul">Nhân hai ma trận (A × B)</option>
+          <option value="solve_x">Tìm ma trận X (A · X = B)</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label>Cấp ma trận (n × n):</label>
+        <select id="matrix-size" onchange="taoBangNhap()">
+          <option value="2">2 x 2</option>
+          <option value="3" selected>3 x 3</option>
+          <option value="4">4 x 4</option>
+        </select>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="nhapNgauNhien()">🎲 Ngẫu nhiên</button>
+        <button class="btn btn-secondary" onclick="xoaTrang()">🗑️ Xóa trắng</button>
+      </div>
+    </div>
+
+    <div class="matrices-wrapper">
+      <div class="matrix-card">
+        <div class="matrix-title">Ma trận A</div>
+        <div id="container-A" class="grid-matrix"></div>
+      </div>
+
+      <div id="wrapper-B" class="matrix-card" style="display: none;">
+        <div class="matrix-title">Ma trận B</div>
+        <div id="container-B" class="grid-matrix"></div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="thucThi()">🚀 TÍNH TOÁN & GIẢI CHI TIẾT</button>
+
+    <div id="output-box" class="result-box" style="display: none;"></div>
+  </div>
+
+  <script>
+    window.onload = taoBangNhap;
+
+    function dinhDangSo(tu, mau = 1) {
+      if (mau === 0) return "Lỗi";
+      if (tu === 0) return "0";
+      return `${Math.round(tu / mau)}`;
+    }
+
+    function taoBangCho(idContainer, n, tienToId) {
+      const container = document.getElementById(idContainer);
+      container.innerHTML = "";
+      container.style.gridTemplateColumns = `repeat(${n}, 50px)`;
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+          const input = document.createElement("input");
+          input.type = "number";
+          input.step = "1";
+          input.id = `${tienToId}-${i}-${j}`;
+          input.value = (i === j) ? 1 : 0;
+          container.appendChild(input);
+        }
+      }
+    }
+
+    function taoBangNhap() {
+      const n = parseInt(document.getElementById("matrix-size").value);
+      taoBangCho("container-A", n, "A");
+      taoBangCho("container-B", n, "B");
+      document.getElementById("output-box").style.display = "none";
+    }
+
+    function doiPhepToan() {
+      const op = document.getElementById("operation-type").value;
+      const wrapB = document.getElementById("wrapper-B");
+      if (op === "add" || op === "mul" || op === "solve_x") {
+        wrapB.style.display = "flex";
+      } else {
+        wrapB.style.display = "none";
+      }
+    }
+
+    function layDuLieu(tienToId, n) {
+      const M = [];
+      for (let i = 0; i < n; i++) {
+        M[i] = [];
+        for (let j = 0; j < n; j++) {
+          const v = parseInt(document.getElementById(`${tienToId}-${i}-${j}`).value, 10);
+          M[i][j] = isNaN(v) ? 0 : v;
+        }
+      }
+      return M;
+    }
+
+    function inMaTran(M) {
+      return M.map(r => "[ " + r.map(v => `${v}`.padEnd(6, " ")).join(", ") + " ]").join("\n");
+    }
+
+    function layMaTranCon(M, r, c) {
+      return M.filter((_, i) => i !== r).map(row => row.filter((_, j) => j !== c));
+    }
+
+    function tinhDinhThuc(M) {
+      const n = M.length;
+      if (n === 1) return M[0][0];
+      if (n === 2) return M[0][0] * M[1][1] - M[0][1] * M[1][0];
+      let det = 0;
+      for (let c = 0; c < n; c++) {
+        const sub = layMaTranCon(M, 0, c);
+        det += Math.pow(-1, c) * M[0][c] * tinhDinhThuc(sub);
+      }
+      return Math.round(det);
+    }
+
+    function tinhMaTranPhuHop(A, n) {
+      const adj = [];
+      for (let i = 0; i < n; i++) adj[i] = [];
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+          const sub = layMaTranCon(A, i, j);
+          const minor = tinhDinhThuc(sub);
+          adj[j][i] = Math.pow(-1, i + j) * minor;
+        }
+      }
+      return adj;
+    }
+
+    function tinhHang(M, n) {
+      let A = M.map(row => [...row]);
+      let rank = n;
+      for (let row = 0; row < rank; row++) {
+        if (A[row][row] !== 0) {
+          for (let col = 0; col < n; col++) {
+            if (col !== row) {
+              let factor = A[col][row] / A[row][row];
+              for (let i = row; i < n; i++) {
+                A[col][i] -= factor * A[row][i];
+              }
+            }
+          }
+        } else {
+          let reduce = true;
+          for (let i = row + 1; i < n; i++) {
+            if (A[i][row] !== 0) {
+              let temp = A[row];
+              A[row] = A[i];
+              A[i] = temp;
+              reduce = false;
+              break;
+            }
+          }
+          if (reduce) {
+            rank--;
+            for (let i = 0; i < n; i++) A[i][row] = A[i][rank];
+          }
+          row--;
+        }
+      }
+      return rank;
+    }
+
+    function thucThi() {
+      const n = parseInt(document.getElementById("matrix-size").value);
+      const op = document.getElementById("operation-type").value;
+      const A = layDuLieu("A", n);
+      const out = document.getElementById("output-box");
+      out.style.display = "block";
+
+      let log = "";
+
+      if (op === "det") {
+        const det = tinhDinhThuc(A);
+        log += "=== KIỂM TRA ĐỊNH THỨC & TÍNH CHẤT MA TRẬN VUÔNG ===\n";
+        log += `Kích thước: ${n} x ${n}\n`;
+        log += "Ma trận A:\n" + inMaTran(A) + "\n\n";
+        log += `=> Định thức det(A) = ${det}\n`;
+        log += det !== 0 
+          ? "=> Kết luận: det(A) ≠ 0 nên ma trận KHÔNG SUY BIẾN (khả nghịch)." 
+          : "=> Kết luận: det(A) = 0 nên ma trận SUY BIẾN (không khả nghịch).";
+      }
+
+      else if (op === "rank") {
+        const r = tinhHang(A, n);
+        log += "=== TÌM HẠNG CỦA MA TRẬN (RANK) ===\n";
+        log += "Ma trận A:\n" + inMaTran(A) + "\n\n";
+        log += `=> Hạng của ma trận: rank(A) = ${r}\n`;
+        log += r === n 
+          ? "=> Ma trận có hạng đầy đủ (Full rank)." 
+          : `=> Ma trận khuyết hạng (Giảm ${n - r} bậc tự do).`;
+      }
+
+      else if (op === "add") {
+        const B = layDuLieu("B", n);
+        const C = [];
+        for (let i = 0; i < n; i++) {
+          C[i] = [];
+          for (let j = 0; j < n; j++) C[i][j] = Math.round(A[i][j] + B[i][j]);
+        }
+        log += "=== PHÉP CỘNG HAI MA TRẬN (C = A + B) ===\n";
+        log += "Kết quả C = A + B:\n" + inMaTran(C);
+      }
+
+      else if (op === "mul") {
+        const B = layDuLieu("B", n);
+        const C = [];
+        for (let i = 0; i < n; i++) {
+          C[i] = [];
+          for (let j = 0; j < n; j++) {
+            let sum = 0;
+            for (let k = 0; k < n; k++) sum += A[i][k] * B[k][j];
+            C[i][j] = Math.round(sum);
+          }
+        }
+        log += "=== PHÉP NHÂN HAI MA TRẬN (C = A × B) ===\n";
+        log += "Kết quả tích C = A × B:\n" + inMaTran(C);
+      }
+
+      else if (op === "inv") {
+        const det = tinhDinhThuc(A);
+        log += "=== MA TRẬN NGHỊCH ĐẢO A⁻¹ ===\n";
+        log += `1. Định thức det(A) = ${det}\n`;
+        if (det === 0) {
+          log += "❌ det(A) = 0 nên ma trận KHÔNG CÓ nghịch đảo.";
+        } else {
+          const adj = tinhMaTranPhuHop(A, n);
+          log += "2. Ma trận phụ hợp adj(A):\n" + inMaTran(adj) + "\n\n";
+          const inv = [];
+          for (let i = 0; i < n; i++) {
+            inv[i] = [];
+            for (let j = 0; j < n; j++) inv[i][j] = dinhDangSo(adj[i][j], det);
+          }
+          log += `3. Kết quả ma trận nghịch đảo A⁻¹ (Số nguyên):\n` + inMaTran(inv);
+        }
+      }
+
+      else if (op === "solve_x") {
+        const B = layDuLieu("B", n);
+        const det = tinhDinhThuc(A);
+        log += "=== GIẢI PHƯƠNG TRÌNH MA TRẬN: A · X = B ===\n";
+        log += "Công thức nghiệm: X = A⁻¹ · B\n\n";
+        if (det === 0) {
+          log += "❌ Không thể giải bằng nghịch đảo vì det(A) = 0.";
+        } else {
+          const adj = tinhMaTranPhuHop(A, n);
+          const X = [];
+          for (let i = 0; i < n; i++) {
+            X[i] = [];
+            for (let j = 0; j < n; j++) {
+              let sum = 0;
+              for (let k = 0; k < n; k++) sum += adj[i][k] * B[k][j];
+              X[i][j] = dinhDangSo(sum, det);
+            }
+          }
+          log += `1. det(A) = ${det}\n`;
+          log += "2. Kết quả nghiệm ma trận X (Số nguyên):\n" + inMaTran(X);
+        }
+      }
+
+      out.innerText = log;
+    }
+
+    function nhapNgauNhien() {
+      const n = parseInt(document.getElementById("matrix-size").value);
+      ["A", "B"].forEach(tienTo => {
+        for (let i = 0; i < n; i++) {
+          for (let j = 0; j < n; j++) {
+            const el = document.getElementById(`${tienTo}-${i}-${j}`);
+            if (el) el.value = Math.floor(Math.random() * 9) - 4;
+          }
+        }
+      });
+    }
+
+    function xoaTrang() {
+      const n = parseInt(document.getElementById("matrix-size").value);
+      ["A", "B"].forEach(tienTo => {
+        for (let i = 0; i < n; i++) {
+          for (let j = 0; j < n; j++) {
+            const el = document.getElementById(`${tienTo}-${i}-${j}`);
+            if (el) el.value = 0;
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
