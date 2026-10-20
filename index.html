@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Máy Tính Đại Số Tuyến Tính</title>
+  <title>Hệ Thống Giải & Phân Tích Ma Trận Từng Bước</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -19,7 +19,7 @@
       padding: 24px;
       border-radius: 12px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      max-width: 800px;
+      max-width: 850px;
       width: 100%;
     }
     h2 {
@@ -129,16 +129,17 @@
       padding: 18px;
       border-radius: 8px;
       border-left: 4px solid #10b981;
-      font-family: monospace;
+      font-family: "Consolas", monospace;
       white-space: pre-wrap;
-      line-height: 1.6;
+      line-height: 1.7;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>🧮 Hệ Thống Đại Số Tuyến Tính Toàn Diện</h2>
-    <p class="subtitle">Tính toán số nguyên và phân tích từng bước</p>
+    <h2>🧮 Máy Tính Ma Trận Kèm Lời Giải Sư Phạm</h2>
+    <p class="subtitle">Giải thích cặn kẽ bản chất công thức toán học từng bước</p>
 
     <div class="control-panel">
       <div class="input-group">
@@ -180,7 +181,7 @@
       </div>
     </div>
 
-    <button class="btn btn-primary" onclick="thucThi()">🚀 TÍNH TOÁN & GIẢI CHI TIẾT</button>
+    <button class="btn btn-primary" onclick="thucThi()">🚀 TÍNH TOÁN & XUẤT LỜI GIẢI CHI TIẾT</button>
 
     <div id="output-box" class="result-box" style="display: none;"></div>
   </div>
@@ -259,53 +260,6 @@
       return Math.round(det);
     }
 
-    function tinhMaTranPhuHop(A, n) {
-      const adj = [];
-      for (let i = 0; i < n; i++) adj[i] = [];
-      for (let i = 0; i < n; i++) {
-        for (let j = 0; j < n; j++) {
-          const sub = layMaTranCon(A, i, j);
-          const minor = tinhDinhThuc(sub);
-          adj[j][i] = Math.pow(-1, i + j) * minor;
-        }
-      }
-      return adj;
-    }
-
-    function tinhHang(M, n) {
-      let A = M.map(row => [...row]);
-      let rank = n;
-      for (let row = 0; row < rank; row++) {
-        if (A[row][row] !== 0) {
-          for (let col = 0; col < n; col++) {
-            if (col !== row) {
-              let factor = A[col][row] / A[row][row];
-              for (let i = row; i < n; i++) {
-                A[col][i] -= factor * A[row][i];
-              }
-            }
-          }
-        } else {
-          let reduce = true;
-          for (let i = row + 1; i < n; i++) {
-            if (A[i][row] !== 0) {
-              let temp = A[row];
-              A[row] = A[i];
-              A[i] = temp;
-              reduce = false;
-              break;
-            }
-          }
-          if (reduce) {
-            rank--;
-            for (let i = 0; i < n; i++) A[i][row] = A[i][rank];
-          }
-          row--;
-        }
-      }
-      return rank;
-    }
-
     function thucThi() {
       const n = parseInt(document.getElementById("matrix-size").value);
       const op = document.getElementById("operation-type").value;
@@ -315,92 +269,222 @@
 
       let log = "";
 
-      if (op === "det") {
+      // 1. TÍNH NGHỊCH ĐẢO VÀ GIẢI THÍCH CHI TIẾT
+      if (op === "inv") {
+        log += "========================================================\n";
+        log += "  PHÂN TÍCH CHI TIẾT TÌM MA TRẬN NGHỊCH ĐẢO A⁻¹\n";
+        log += "========================================================\n\n";
+        log += "Ma trận ban đầu A:\n" + inMaTran(A) + "\n\n";
+
+        // Bước 1: Tính định thức
         const det = tinhDinhThuc(A);
-        log += "=== KIỂM TRA ĐỊNH THỨC & TÍNH CHẤT MA TRẬN VUÔNG ===\n";
-        log += `Kích thước: ${n} x ${n}\n`;
-        log += "Ma trận A:\n" + inMaTran(A) + "\n\n";
-        log += `=> Định thức det(A) = ${det}\n`;
-        log += det !== 0 
-          ? "=> Kết luận: det(A) ≠ 0 nên ma trận KHÔNG SUY BIẾN (khả nghịch)." 
-          : "=> Kết luận: det(A) = 0 nên ma trận SUY BIẾN (không khả nghịch).";
-      }
+        log += "📍 BƯỚC 1: TÍNH ĐỊNH THỨC det(A)\n";
+        log += `• det(A) = ${det}\n`;
+        if (det === 0) {
+          log += "❌ KẾT LUẬN: Vì det(A) = 0, ma trận suy biến nên KHÔNG TỒN TẠI ma trận nghịch đảo.\n";
+          out.innerText = log;
+          return;
+        }
+        log += `• Vì det(A) = ${det} ≠ 0 => Ma trận A khả nghịch (tồn tại A⁻¹).\n\n`;
 
-      else if (op === "rank") {
-        const r = tinhHang(A, n);
-        log += "=== TÌM HẠNG CỦA MA TRẬN (RANK) ===\n";
-        log += "Ma trận A:\n" + inMaTran(A) + "\n\n";
-        log += `=> Hạng của ma trận: rank(A) = ${r}\n`;
-        log += r === n 
-          ? "=> Ma trận có hạng đầy đủ (Full rank)." 
-          : `=> Ma trận khuyết hạng (Giảm ${n - r} bậc tự do).`;
-      }
+        // Bước 2: Tính từng phần bù đại số
+        log += "📍 BƯỚC 2: TÌM CÁC PHẦN BÙ ĐẠI SỐ C_ij = (-1)^(i+j) * M_ij\n";
+        log += "(Trong đó M_ij là định thức ma trận con bỏ đi dòng i và cột j)\n\n";
 
-      else if (op === "add") {
-        const B = layDuLieu("B", n);
         const C = [];
+        const adj = [];
         for (let i = 0; i < n; i++) {
           C[i] = [];
-          for (let j = 0; j < n; j++) C[i][j] = Math.round(A[i][j] + B[i][j]);
+          adj[i] = [];
         }
-        log += "=== PHÉP CỘNG HAI MA TRẬN (C = A + B) ===\n";
-        log += "Kết quả C = A + B:\n" + inMaTran(C);
+
+        for (let i = 0; i < n; i++) {
+          for (let j = 0; j < n; j++) {
+            const sub = layMaTranCon(A, i, j);
+            const minor = tinhDinhThuc(sub);
+            const dau = Math.pow(-1, i + j);
+            const cofactor = dau * minor;
+            C[i][j] = cofactor;
+            adj[j][i] = cofactor; // Chuyển vị
+
+            log += `• Vị trí C[${i+1},${j+1}]: (-1)^(${i+1}+${j+1}) * det(M_${i+1}${j+1}) = (${dau > 0 ? '+1' : '-1'}) * (${minor}) = ${cofactor}\n`;
+          }
+        }
+
+        log += "\n=> Ma trận các phần bù đại số C:\n" + inMaTran(C) + "\n\n";
+
+        // Bước 3: Tìm ma trận phụ hợp adj(A)
+        log += "📍 BƯỚC 3: TÌM MA TRẬN PHỤ HỢP adj(A) = C^T\n";
+        log += "• Lấy chuyển vị của ma trận C (đổi dòng thành cột):\n";
+        log += inMaTran(adj) + "\n\n";
+
+        // Bước 4: Áp dụng công thức
+        log += "📍 BƯỚC 4: TÍNH A⁻¹ THEO CÔNG THỨC: A⁻¹ = (1 / det(A)) * adj(A)\n";
+        log += `• Lấy từng phần tử của adj(A) chia cho det(A) = ${det}:\n`;
+
+        const inv = [];
+        for (let i = 0; i < n; i++) {
+          inv[i] = [];
+          for (let j = 0; j < n; j++) {
+            inv[i][j] = dinhDangSo(adj[i][j], det);
+          }
+        }
+        log += "\n🎯 ĐÁP SỐ CUỐI CÙNG (Số nguyên):\n" + inMaTran(inv);
       }
 
+      // 2. PHÉP NHÂN HAI MA TRẬN VÀ GIẢI THÍCH
       else if (op === "mul") {
         const B = layDuLieu("B", n);
+        log += "========================================================\n";
+        log += "  PHÂN TÍCH CHI TIẾT PHÉP NHÂN HAI MA TRẬN (C = A × B)\n";
+        log += "========================================================\n\n";
+        log += "Quy tắc: Phần tử C[i, j] bằng TÍCH VÔ HƯỚNG giữa [Hàng i của A] và [Cột j của B].\n";
+        log += "Công thức: C[i, j] = A[i, 1]*B[1, j] + A[i, 2]*B[2, j] + ...\n\n";
+
         const C = [];
         for (let i = 0; i < n; i++) {
           C[i] = [];
           for (let j = 0; j < n; j++) {
             let sum = 0;
-            for (let k = 0; k < n; k++) sum += A[i][k] * B[k][j];
+            let stepStr = [];
+            for (let k = 0; k < n; k++) {
+              sum += A[i][k] * B[k][j];
+              stepStr.push(`(${A[i][k]} × ${B[k][j]})`);
+            }
             C[i][j] = Math.round(sum);
+            log += `• C[${i+1},${j+1}] = ${stepStr.join(" + ")} = ${sum}\n`;
           }
         }
-        log += "=== PHÉP NHÂN HAI MA TRẬN (C = A × B) ===\n";
-        log += "Kết quả tích C = A × B:\n" + inMaTran(C);
+        log += "\n🎯 KẾT QUẢ TÍCH A × B:\n" + inMaTran(C);
       }
 
-      else if (op === "inv") {
-        const det = tinhDinhThuc(A);
-        log += "=== MA TRẬN NGHỊCH ĐẢO A⁻¹ ===\n";
-        log += `1. Định thức det(A) = ${det}\n`;
-        if (det === 0) {
-          log += "❌ det(A) = 0 nên ma trận KHÔNG CÓ nghịch đảo.";
-        } else {
-          const adj = tinhMaTranPhuHop(A, n);
-          log += "2. Ma trận phụ hợp adj(A):\n" + inMaTran(adj) + "\n\n";
-          const inv = [];
-          for (let i = 0; i < n; i++) {
-            inv[i] = [];
-            for (let j = 0; j < n; j++) inv[i][j] = dinhDangSo(adj[i][j], det);
+      // 3. PHÉP CỘNG MA TRẬN
+      else if (op === "add") {
+        const B = layDuLieu("B", n);
+        log += "========================================================\n";
+        log += "  PHÂN TÍCH PHÉP CỘNG HAI MA TRẬN (C = A + B)\n";
+        log += "========================================================\n\n";
+        log += "Quy tắc: Cộng từng phần tử ở các vị trí tương ứng C[i, j] = A[i, j] + B[i, j]:\n\n";
+
+        const C = [];
+        for (let i = 0; i < n; i++) {
+          C[i] = [];
+          for (let j = 0; j < n; j++) {
+            const sum = A[i][j] + B[i][j];
+            C[i][j] = sum;
+            log += `• C[${i+1},${j+1}] = A[${i+1},${j+1}] + B[${i+1},${j+1}] = ${A[i][j]} + (${B[i][j]}) = ${sum}\n`;
           }
-          log += `3. Kết quả ma trận nghịch đảo A⁻¹ (Số nguyên):\n` + inMaTran(inv);
         }
+        log += "\n🎯 KẾT QUẢ A + B:\n" + inMaTran(C);
       }
 
+      // 4. TÌM MA TRẬN X (A · X = B)
       else if (op === "solve_x") {
         const B = layDuLieu("B", n);
         const det = tinhDinhThuc(A);
-        log += "=== GIẢI PHƯƠNG TRÌNH MA TRẬN: A · X = B ===\n";
-        log += "Công thức nghiệm: X = A⁻¹ · B\n\n";
+        log += "========================================================\n";
+        log += "  PHÂN TÍCH GIẢI PHƯƠNG TRÌNH MA TRẬN: A · X = B\n";
+        log += "========================================================\n\n";
+        log += "• Ta có phương trình: A · X = B\n";
+        log += "• Nhân cả hai vế bên trái với A⁻¹:\n";
+        log += "    (A⁻¹ · A) · X = A⁻¹ · B\n";
+        log += "    I · X = A⁻¹ · B\n";
+        log += "    => X = A⁻¹ · B\n\n";
+
         if (det === 0) {
-          log += "❌ Không thể giải bằng nghịch đảo vì det(A) = 0.";
+          log += "❌ Định thức det(A) = 0 nên A không khả nghịch, không thể tìm X bằng nghịch đảo.";
         } else {
-          const adj = tinhMaTranPhuHop(A, n);
+          log += `1. Định thức det(A) = ${det} ≠ 0 => Tồn tại A⁻¹.\n`;
+
+          // Tính adj(A)
+          const adj = [];
+          for (let i = 0; i < n; i++) adj[i] = [];
+          for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+              const sub = layMaTranCon(A, i, j);
+              adj[j][i] = Math.pow(-1, i + j) * tinhDinhThuc(sub);
+            }
+          }
+
+          log += "2. Nhân [Ma trận phụ hợp adj(A)] với [Ma trận B]:\n";
           const X = [];
           for (let i = 0; i < n; i++) {
             X[i] = [];
             for (let j = 0; j < n; j++) {
               let sum = 0;
-              for (let k = 0; k < n; k++) sum += adj[i][k] * B[k][j];
-              X[i][j] = dinhDangSo(sum, det);
+              let stepStr = [];
+              for (let k = 0; k < n; k++) {
+                sum += adj[i][k] * B[k][j];
+                stepStr.push(`(${adj[i][k]} × ${B[k][j]})`);
+              }
+              const val = Math.round(sum / det);
+              X[i][j] = val;
+              log += `• X[${i+1},${j+1}] = [${stepStr.join(" + ")}] / ${det} = ${sum} / ${det} = ${val}\n`;
             }
           }
-          log += `1. det(A) = ${det}\n`;
-          log += "2. Kết quả nghiệm ma trận X (Số nguyên):\n" + inMaTran(X);
+          log += "\n🎯 NGHIỆM MA TRẬN X (Số nguyên):\n" + inMaTran(X);
         }
+      }
+
+      // 5. ĐỊNH THỨC
+      else if (op === "det") {
+        const det = tinhDinhThuc(A);
+        log += "========================================================\n";
+        log += "  PHÂN TÍCH ĐỊNH THỨC det(A)\n";
+        log += "========================================================\n\n";
+        log += "Khai triển Laplace theo dòng đầu tiên:\n";
+        let step = [];
+        for (let c = 0; c < n; c++) {
+          const sub = layMaTranCon(A, 0, c);
+          const subDet = tinhDinhThuc(sub);
+          const dau = Math.pow(-1, c);
+          step.push(`(${dau > 0 ? '+1' : '-1'}) × ${A[0][c]} × det(M_1${c+1}: ${subDet})`);
+        }
+        log += `• det(A) = ${step.join(" + ")} = ${det}\n\n`;
+        log += det !== 0
+          ? "=> det(A) ≠ 0: Ma trận không suy biến (có nghịch đảo, các hàng độc lập tuyến tính)."
+          : "=> det(A) = 0: Ma trận suy biến (không có nghịch đảo, các hàng phụ thuộc tuyến tính).";
+      }
+
+      // 6. HẠNG MA TRẬN
+      else if (op === "rank") {
+        log += "========================================================\n";
+        log += "  TÌM HẠNG CỦA MA TRẬN (RANK)\n";
+        log += "========================================================\n\n";
+        log += "• Bản chất: Số lượng các hàng (hoặc cột) độc lập tuyến tính tối đa.\n";
+        log += "• Phương pháp: Dùng các phép biến đổi sơ cấp đưa về dạng ma trận bậc thang.\n";
+
+        // Khử Gauss
+        let M = A.map(r => [...r]);
+        let rank = n;
+        for (let row = 0; row < rank; row++) {
+          if (M[row][row] !== 0) {
+            for (let col = 0; col < n; col++) {
+              if (col !== row) {
+                let factor = M[col][row] / M[row][row];
+                for (let i = row; i < n; i++) M[col][i] -= factor * M[row][i];
+              }
+            }
+          } else {
+            let reduce = true;
+            for (let i = row + 1; i < n; i++) {
+              if (M[i][row] !== 0) {
+                let temp = M[row];
+                M[row] = M[i];
+                M[i] = temp;
+                reduce = false;
+                break;
+              }
+            }
+            if (reduce) {
+              rank--;
+              for (let i = 0; i < n; i++) M[i][row] = M[i][rank];
+            }
+            row--;
+          }
+        }
+        log += `\n🎯 Hạng của ma trận: rank(A) = ${rank}\n`;
+        log += rank === n ? "=> Ma trận có hạng đầy đủ." : `=> Ma trận suy biến (khuyết ${n - rank} chiều).`;
       }
 
       out.innerText = log;
